@@ -36,6 +36,7 @@ type State
     | GotNumber
     | GotDefinitions
     | WinOrLose
+    | ShowAnswer
 
 type alias WordInfo =
     { word : String
@@ -59,6 +60,7 @@ type Msg
     | NewGuess String
     | CheckAnswer
     | LoadingModel
+    | SeeAnswer
 
 
 ---------- MAIN ------------------------------------
@@ -135,6 +137,10 @@ update msg model =
         LoadingModel->
             ({model | guess=""} 
             , Http.get {url = "./Data.txt", expect= Http.expectString GotText})
+        
+        SeeAnswer ->
+            ({model | state = ShowAnswer}, Cmd.none)
+    
         _ ->
             (model, Cmd.none)
 
@@ -161,10 +167,10 @@ view model =
                     ]         
 
         GotList ->
-            div [] (List.map text model.listOfWords)
-        
+            div [] []
+
         GotNumber ->
-            text ((String.fromInt model.index) ++ model.word)
+            div [][]
         
         Failure error ->
             text error
@@ -173,8 +179,21 @@ view model =
             div []
                     [ checkAnswer model ]
         
+        ShowAnswer ->
+            div[] 
+            [ div wrongAnswerStyle
+                [ p [style "margin-top" "20px", style "margin-bottom" "10px"] [ text "Wrong answer ! \n Wanna try again ?"]
+                , div [] 
+                    [ button ([onClick (GotIndex model.index)] ++ ([Html.Attributes.type_ "Yes"]  ++ yesButtonStyle))
+                        [text "Yes"]
+                    ,  button ([onClick LoadingModel] ++ ([Html.Attributes.type_ "No"] ++ noButtonStyle))
+                        [text "new word"]
+                    , h4 [] [ text model.word]
+                    ]
+                ]
+            ]
         _ ->
-          text "we will see that later"
+          text "oops! please recharge"
 
 
 viewWordInfo : WordInfo -> Html Msg
@@ -217,6 +236,8 @@ checkAnswer model =
                     [text "Yes"]
                 ,  button ([onClick LoadingModel] ++ ([Html.Attributes.type_ "No"] ++ noButtonStyle))
                     [text "new word"]
+                , button ([onClick SeeAnswer] ++ ([Html.Attributes.type_ "See answer"] ++ seeAnswerStyle))
+                    [text "See Answer"]
                 ]
             ]
 ----------------- JSON --------------------------------------------
@@ -266,13 +287,15 @@ backFormStyle =
     [ style "border-radius" "5px"
     , style "background-color" "rgb(242, 104, 36)"
     , style "text-align" "center"
-    , style "width" "fill"
+    , style "width" "900px"
     , style "margin" "auto"
     , style "margin-top" "15px"
-    , style "position" "absolute"
-    , style "top" "50%"
-    , style "left" "50%"
-    , style "transform" "translate(-50%, -50%)"
+    , style "margin-bottom" "15px"
+    , style "display" "flex"
+    , style "flex-direction" "column"
+    , style "align-items" "center"
+    -- , style "left" "50%"
+    -- , style "transform" "translate(-50%, -50%)"
     ]
 
 formStyle : List (Attribute msg)
@@ -284,7 +307,7 @@ formStyle =
     , style "margin" "auto"
     , style "margin-top" "15px"
     , style "position" "absolute"
-    --, style "top" "50%"
+    , style "top" "50%"
     , style "left" "50%"
     , style "transform" "translate(-50%, -50%)"
     ]
@@ -345,7 +368,23 @@ noButtonStyle =
     , style "border-radius" "4px"
     , style "font-size" "11px"
     ]
-  
+
+seeAnswerStyle : List (Attribute msg)
+seeAnswerStyle = 
+    [ style "width" "100px"
+    , style "height" "40px"
+    , style "border-radius" "15"
+    , style "background-color" "purple"
+    , style "color" "white"
+    , style "padding" "14px 20px"
+    , style "margin-top" "10px"
+    , style "margin-left" "15px"
+    , style "margin-bottom" "10px"
+    , style "border" "2px"
+    , style "border-radius" "4px"
+    , style "font-size" "11px"
+    ]
+
 textStyle : List (Attribute msg)
 textStyle =
     [style "text-align" "justified"
